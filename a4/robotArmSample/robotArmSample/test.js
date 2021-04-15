@@ -10,31 +10,7 @@ var vBuffer, cBuffer;
 let points = [];
 let vertices = [];
 let colors = [];
-// let top_circle_points = [];
-// let top_circle_vertices = [];
-// let bottom_circle_points = [];
-// let bottom_circle_vertices = [];
-// let circle_colors = [];
 
-function initCircleVertices (n, vertices, y){
-  let angle = 0;
-  let inc = Math.PI*2/n;
-  for(var i=0;i<n;i++){
-    vertices.push(vec4(Math.cos(angle), y, Math.sin(angle), 1));
-    angle += inc;
-  }
-}
-
-function initCircle(points, vertices){
-  for(var i=0;i<vertices.length-1;i++){
-    points.push(vec4(0,0,0,1));
-    points.push(vertices[i]);
-    points.push(vertices[i+1]);
-  }
-  points.push(vec4(0,0,0,1));
-  points.push(vertices[vertices.length-1]);
-  points.push(vertices[0]);
-}
 
 function initColors(n, r, g, b){
   for(var i=0;i<n;i++){
@@ -189,40 +165,13 @@ var render = function() {
     projectionMatrix = mult(scale4(0.5,0.5,0.5),projectionMatrix);
 
 
-    drawCylinder(projectionMatrix);
+    let projectionMatrixLoc = gl.getUniformLocation(program, 'projectionMatrix');
+
+
+    gl.uniformMatrix4fv( projectionMatrixLoc,  false, flatten(projectionMatrix));
+
+    gl.drawArrays(gl.TRIANGLES, 0, points.length)
 
 
     requestAnimFrame(render);
-}
-
-
-function drawCylinder(projectionMatrix){
-  gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
-  gl.bufferData( gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW );
-
-  gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
-  gl.bufferData( gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW );
-
-
-  let projectionMatrixLoc = gl.getUniformLocation(program, 'projectionMatrix');
-
-
-  gl.uniformMatrix4fv( projectionMatrixLoc,  false, flatten(projectionMatrix));
-
-  gl.drawArrays(gl.TRIANGLES, 0, points.length)
-}
-
-function drawCircle(projectionMatrix){
-  gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
-  gl.bufferData( gl.ARRAY_BUFFER, flatten(circle_points), gl.STATIC_DRAW );
-
-  gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
-  gl.bufferData( gl.ARRAY_BUFFER, flatten(circle_colors), gl.STATIC_DRAW );
-
-  let projectionMatrixLoc = gl.getUniformLocation(program, 'projectionMatrix');
-
-
-  gl.uniformMatrix4fv( projectionMatrixLoc,  false, flatten(projectionMatrix));
-
-  gl.drawArrays(gl.TRIANGLES, 0, circle_points.length)
 }
