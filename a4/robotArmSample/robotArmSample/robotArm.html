@@ -4,15 +4,41 @@
 <script id="vertex-shader" type="x-shader/x-vertex">
 attribute  vec4 vPosition;
 attribute  vec4 vColor;
+attribute  vec4 vNormal;
+
 varying vec4 fColor;
 
-// uniform mat4 modelViewMatrix;
-// uniform mat4 projectionMatrix;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform vec4 lightPosition;
+uniform vec4 lightColor;
 
 void main()
 {
-    fColor = vColor;
-    gl_Position = vPosition;
+    vec3 position = -(modelViewMatrix * vPosition).xyz;
+    vec3 light = lightPosition.xyz;
+    vec3 lightNorm = normalize(light-position);
+    vec3 posNorm = normalize(-position);
+    vec3 viewNorm = normalize(lightNorm + posNorm);
+    vec3 normals = normalize((modelViewMatrix * vNormal).xyz);
+
+    vec4 ambient = 0.1 * lightColor;
+
+    float diffuseCo = max(dot(lightNorm, normals), 0.0);
+    vec4 diffuse = diffuseCo * lightColor;
+
+    float specCo = pow(max(dot(normals, viewNorm), 0.0), 128.0);
+    vec4 specular = specCo * lightColor;
+
+    if (dot(lightNorm, normals) < 0.0){
+      specular = vec4(0.0,0.0,0.0,1.0);
+    }
+
+
+
+    fColor = (ambient + diffuse + specular) * vColor;
+    fColor.a = 1.0;
+    gl_Position = projectionMatrix * modelViewMatrix * vPosition;
 }
 </script>
 
@@ -21,6 +47,7 @@ void main()
 precision mediump float;
 
 varying  vec4 fColor;
+
 
 void main()
 {
@@ -34,27 +61,93 @@ void main()
 <script type="text/javascript" src="test.js"></script>
 
 <div>
-body angle -180 <input id="slider1" type="range"
+base -180 <input id="slider1" type="range"
  min="-180" max="180" step="10" value="0"
   />
  180
 </div><br/>
 
 <div>
-lower arm angle -180 <input id="slider2" type="range"
+lower arm -180 <input id="slider2" type="range"
  min="-180" max="180" step="10" value="0"
   />
  180
 </div><br/>
 
 <div>
-upper arm angle -180 <input id="slider3" type="range"
+upper arm -180 <input id="slider3" type="range"
  min="-180" max="180" step="10" value="0"
   />
  180
-</div><br/>
+</div><br/><br>
 
+<h3>Toggle View</h3>
+<label class="switch">
+  <input type="checkbox" id="toggle">
+  <span class="slider"></span>
+</label>
 
+<br>
+
+<style media="screen">
+  /* copied from https://www.w3schools.com/howto/howto_css_switch.asp */
+
+  /* The switch - the box around the slider */
+  .switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+  }
+
+  /* Hide default HTML checkbox */
+  .switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  }
+
+  /* The slider */
+  .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+  }
+
+  .slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+  }
+
+  input:checked + .slider {
+  background-color: #2196F3;
+  }
+
+  input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+  }
+
+  input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+  }
+</style>
+
+<h1 id="viewText">Side View</h1>
 <body>
 <canvas id="gl-canvas" width="512"" height="512">
 Oops ... your browser doesn't support the HTML5 canvas element

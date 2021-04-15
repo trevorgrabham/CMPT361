@@ -20,24 +20,12 @@ var vertices = [
     vec4(  0.5, -0.5, -0.5, 1.0 )
 ];
 
-var cylvertices = [];
-var cylcolors = [];
+var cylinderp = [];
+var cylinderv = [];
+var cylinderc = [];
+var cylindernorms = [];
 
-function initcylvertices(){
-  var x, z;
-  var cyltheta = 0;
-  var delta = Math.PI*2/NumCylSides;
 
-  for(var i=0;i<NumCylSides;i++){
-    cylvertices.push(vec4(Math.cos(cyltheta)/2, 0.5, Math.sin(cyltheta)/2, 1));
-  }
-  cyltheta = 0;
-  for(var i=0;i<NumCylSides;i++){
-    cylvertices.push(vec4(Math.cos(cyltheta)/2, -0.5, Math.sin(cyltheta)/2, 1));
-  }
-}
-
-initcylvertices();
 
 // RGBA colors
 var vertexColors = [
@@ -54,8 +42,8 @@ var vertexColors = [
 
 // Parameters controlling the size of the Robot's arm
 
-var BASE_HEIGHT      = 2.0;
-var BASE_WIDTH       = 5.0;
+var BASE_HEIGHT      = 0.5;
+var BASE_WIDTH       = 0.5;
 var LOWER_ARM_HEIGHT = 2.0;
 var LOWER_ARM_WIDTH  = 0.3;
 var UPPER_ARM_HEIGHT = 2.0;
@@ -72,13 +60,15 @@ var LowerArm = 1;
 var UpperArm = 2;
 
 
-var theta= [ 0, 0, 0];
+var theta= [ -60, -60, -50];
+var sun = [-1.5, 2, 3];
+var checked;
 
 var angle = 0;
 
 var modelViewMatrixLoc;
 
-var vBuffer, cBuffer;
+var vBuffer, cBuffer, nBuffer;
 
 //----------------------------------------------------------------------------
 
@@ -97,21 +87,75 @@ function quad(  a,  b,  c,  d ) {
     points.push(vertices[d]);
 }
 
-function cylquad(  a,  b,  c,  d ) {
-    cylcolors.push(vec4(1.0,0.0,0.0,1.0));
-    cylpoints.push(cylvertices[a]);
-    cylcolors.push(vec4(1.0,0.0,0.0,1.0));
-    cylpoints.push(cylvertices[b]);
-    cylcolors.push(vec4(1.0,0.0,0.0,1.0));
-    cylpoints.push(cylvertices[c]);
-    cylcolors.push(vec4(1.0,0.0,0.0,1.0));
-    cylpoints.push(cylvertices[a]);
-    cylcolors.push(vec4(1.0,0.0,0.0,1.0));
-    cylpoints.push(cylvertices[c]);
-    cylcolors.push(vec4(1.0,0.0,0.0,1.0));
-    cylpoints.push(cylvertices[d]);
+function cylinderquad(a, b, c, d){
+  cylinderp.push(cylinderv[a]);
+  cylinderp.push(cylinderv[b]);
+  cylinderp.push(cylinderv[c]);
+  cylinderp.push(cylinderv[a]);
+  cylinderp.push(cylinderv[c]);
+  cylinderp.push(cylinderv[d]);
+  cylindernorms.push(cylinderv[a]);
+  cylindernorms.push(cylinderv[b]);
+  cylindernorms.push(cylinderv[c]);
+  cylindernorms.push(cylinderv[a]);
+  cylindernorms.push(cylinderv[c]);
+  cylindernorms.push(cylinderv[d]);
 }
 
+function initColors(n, r, g, b){
+  for(var i=0;i<n;i++){
+    cylinderc.push(vec4(r,g,b,1));
+  }
+}
+
+function initCylinderVertices(n){
+  let angle = 0;
+  let inc = Math.PI*2/n;
+  for(var i=0;i<n;i++){
+    cylinderv.push(vec4(Math.cos(angle)/2, 0.5, Math.sin(angle)/2, 1));
+    angle += inc;
+  }
+  angle = 0;
+  for(var i=0;i<n;i++){
+    cylinderv.push(vec4(Math.cos(angle)/2, -0.5, Math.sin(angle)/2, 1));
+    angle += inc;
+  }
+}
+
+function initCylinder(n) {
+  for(var i=0;i<n-1;i++){
+    cylinderquad(i,i+1,i+n+1,i+n);
+  }
+  cylinderquad(n-1,0,n,2*n-1);
+  for(var i=0;i<n-1;i++){
+    cylinderp.push(vec4(0,0.5,0,1));
+    cylinderp.push(cylinderv[i]);
+    cylinderp.push(cylinderv[i+1]);
+    cylindernorms.push(vec4(0,1,0,1));
+    cylindernorms.push(vec4(0,1,0,1));
+    cylindernorms.push(vec4(0,1,0,1));
+  }
+  cylinderp.push(vec4(0,0.5,0,1));
+  cylinderp.push(cylinderv[n-1]);
+  cylinderp.push(cylinderv[0]);
+  cylindernorms.push(vec4(0,1,0,1));
+  cylindernorms.push(vec4(0,1,0,1));
+  cylindernorms.push(vec4(0,1,0,1));
+  for(var i=0;i<n-1;i++){
+    cylinderp.push(vec4(0,-0.5,0,1));
+    cylinderp.push(cylinderv[n+i]);
+    cylinderp.push(cylinderv[n+i+1]);
+    cylindernorms.push(vec4(0,-1,0,1));
+    cylindernorms.push(vec4(0,-1,0,1));
+    cylindernorms.push(vec4(0,-1,0,1));
+  }
+  cylinderp.push(vec4(0,-0.5,0,1));
+  cylinderp.push(cylinderv[2*n-1]);
+  cylinderp.push(cylinderv[n]);
+  cylindernorms.push(vec4(0,-1,0,1));
+  cylindernorms.push(vec4(0,-1,0,1));
+  cylindernorms.push(vec4(0,-1,0,1));
+}
 
 function colorCube() {
     quad( 1, 0, 3, 2 );
@@ -122,12 +166,6 @@ function colorCube() {
     quad( 5, 4, 0, 1 );
 }
 
-function colorCyl() {
-  for(var i=0;i<NumCylSides-1;i++){
-    cylquad(i+1,i, NumCylSides+i, NumCylSides+i+1);
-  }
-  cylquad(0,NumCylSides-1, 2*NumCylSides-2, 2*NumCylSides-1);
-}
 
 //____________________________________________
 
@@ -165,7 +203,13 @@ window.onload = function init() {
     gl.useProgram( program );
 
     // colorCube();
-    colorCyl();
+    colorCube();
+
+    initCylinderVertices(36);
+    initCylinder(NumCylSides);
+    initColors(NumCylSides*6, 1, 0, 0);
+    initColors(NumCylSides*3, 0, 1, 0);
+    initColors(NumCylSides*3, 0, 0, 1);
 
     // Load shaders and use the resulting shader program
 
@@ -176,15 +220,23 @@ window.onload = function init() {
 
     vBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
-    gl.bufferData( gl.ARRAY_BUFFER, flatten(cylpoints), gl.STATIC_DRAW );
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW );
 
     var vPosition = gl.getAttribLocation( program, "vPosition" );
     gl.vertexAttribPointer( vPosition, 4, gl.FLOAT, false, 0, 0 );
     gl.enableVertexAttribArray( vPosition );
 
+    nBuffer = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, nBuffer );
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(cylindernorms), gl.STATIC_DRAW );
+
+    var vNormal = gl.getAttribLocation( program, "vNormal" );
+    gl.vertexAttribPointer( vNormal, 4, gl.FLOAT, false, 0, 0 );
+    gl.enableVertexAttribArray( vNormal );
+
     cBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
-    gl.bufferData( gl.ARRAY_BUFFER, flatten(cylcolors), gl.STATIC_DRAW );
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW );
 
     var vColor = gl.getAttribLocation( program, "vColor" );
     gl.vertexAttribPointer( vColor, 4, gl.FLOAT, false, 0, 0 );
@@ -199,20 +251,27 @@ window.onload = function init() {
     document.getElementById("slider3").onchange = function(event) {
          theta[2] =  event.target.value;
     };
+    document.getElementById("toggle").onclick = function(event) {
+        checked = event.target.checked;
+        document.getElementById("viewText").innerHTML = "Side View";
+        if(checked){
+          document.getElementById("viewText").innerHTML = "Top View";
+        }
+    }
 
-    // modelViewMatrixLoc = gl.getUniformLocation(program, "modelViewMatrix");
-    //
-    // projectionMatrix = ortho(-10, 10, -10, 10, -10, 10);
-    // gl.uniformMatrix4fv( gl.getUniformLocation(program, "projectionMatrix"),  false, flatten(projectionMatrix) );
-    //
-    // modelViewMatrix = rotate(theta[Base], 0, 1, 0 );
-    // var s = scale4(BASE_WIDTH, BASE_HEIGHT, BASE_WIDTH);
-    // var instanceMatrix = mult( translate( 0.0, 0.5 * BASE_HEIGHT, 0.0 ), s);
-    // var t = mult(modelViewMatrix, instanceMatrix);
-    // gl.uniformMatrix4fv(modelViewMatrixLoc,  false, flatten(t) );
-    gl.drawArrays( gl.TRIANGLES, 0, cylpoints.length/3 );
+    modelViewMatrixLoc = gl.getUniformLocation(program, "modelViewMatrix");
 
-    // render();
+    projectionMatrix = ortho(-10, 10, -10, 10, -10, 10);
+    gl.uniformMatrix4fv( gl.getUniformLocation(program, "projectionMatrix"),  false, flatten(projectionMatrix) );
+
+    var lightPosition = vec4(sun[0],sun[1],sun[2],1);
+    var lightColor = vec4(1,1,1,1);
+    gl.uniform4fv( gl.getUniformLocation(program, "lightPosition"), flatten(lightPosition) );
+    gl.uniform4fv( gl.getUniformLocation(program, "lightColor"), flatten(lightColor) );
+
+
+
+    render();
 }
 
 //----------------------------------------------------------------------------
@@ -223,14 +282,21 @@ function base() {
     var instanceMatrix = mult( translate( 0.0, 0.5 * BASE_HEIGHT, 0.0 ), s);
     var t = mult(modelViewMatrix, instanceMatrix);
     gl.uniformMatrix4fv(modelViewMatrixLoc,  false, flatten(t) );
-    gl.drawArrays( gl.TRIANGLES, 0, cylpoints.length/3 );
+
+    gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(cylinderp), gl.STATIC_DRAW );
+
+    gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(cylinderc), gl.STATIC_DRAW );
+
+    gl.drawArrays( gl.TRIANGLES, 0, cylinderp.length );
 }
 
 //----------------------------------------------------------------------------
 
 
 function upperArm() {
-    vBuffer = gl.createBuffer();
+
     gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW );
     var s = scale4(UPPER_ARM_WIDTH, UPPER_ARM_HEIGHT, UPPER_ARM_WIDTH);
@@ -245,7 +311,6 @@ function upperArm() {
 
 function lowerArm()
 {
-    vBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW );
     var s = scale4(LOWER_ARM_WIDTH, LOWER_ARM_HEIGHT, LOWER_ARM_WIDTH);
@@ -262,16 +327,28 @@ var render = function() {
 
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
+    var lightPosition = vec4(sun[0],sun[1],sun[2],1);
+    gl.uniform4fv( gl.getUniformLocation(program, "lightPosition"), flatten(lightPosition) );
+
+    var camMatrix = mat4();
+
+    if(checked){
+      camMatrix = rotateX(90);
+    }
+
     modelViewMatrix = rotate(theta[Base], 0, 1, 0 );
+    modelViewMatrix = mult(camMatrix, modelViewMatrix);
+    var scaleMatrix = scale4(2,2,2);
+    modelViewMatrix = mult(scaleMatrix, modelViewMatrix);
     base();
 
-    // modelViewMatrix = mult(modelViewMatrix, translate(0.0, BASE_HEIGHT, 0.0));
-    // modelViewMatrix = mult(modelViewMatrix, rotate(theta[LowerArm], 0, 0, 1 ));
-    // lowerArm();
-    //
-    // modelViewMatrix  = mult(modelViewMatrix, translate(0.0, LOWER_ARM_HEIGHT, 0.0));
-    // modelViewMatrix  = mult(modelViewMatrix, rotate(theta[UpperArm], 0, 0, 1) );
-    // upperArm();
+    modelViewMatrix = mult(modelViewMatrix, translate(0.0, BASE_HEIGHT, 0.0));
+    modelViewMatrix = mult(modelViewMatrix, rotate(theta[LowerArm], 0, 0, 1 ));
+    lowerArm();
+
+    modelViewMatrix  = mult(modelViewMatrix, translate(0.0, LOWER_ARM_HEIGHT, 0.0));
+    modelViewMatrix  = mult(modelViewMatrix, rotate(theta[UpperArm], 0, 0, 1) );
+    upperArm();
 
     requestAnimFrame(render);
 }
