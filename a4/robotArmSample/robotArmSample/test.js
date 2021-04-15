@@ -27,6 +27,51 @@ function quad(a, b, c, d){
   points.push(vertices[d]);
 }
 
+
+function initSphereVertices(nLong, nLat){
+  let longInc = 2*Math.PI/nLong;
+  let latInc = Math.PI/nLat;
+  let longAngle = 0;
+  let latAngle = 0;
+
+  for(var i=0;i<=nLat;i++){
+    latAngle = Math.PI/2 - i*latInc;
+    let xy = Math.cos(latAngle);
+    let z = Math.sin(latAngle);
+    for(var j=0;j<=nLong;j++){
+      longAngle = j*longInc;
+      let x = xy * Math.cos(longAngle);
+      let y = xy * Math.sin(longAngle);
+      vertices.push(vec4(x,y,z,1));
+      // push norms here vec4(normalize((x,y,z)),1)
+    }
+  }
+}
+
+
+function initSphere(nLong, nLat){
+  var k1,k2;
+
+  for(var i=0;i<nLat;i++){
+    k1 = i * (nLong+1);
+    k2 = k1 + nLong + 1;
+
+    for(var j=0;j<nLong;j++,k1++,k2++){
+      if(i != 0){
+        points.push(vertices[k1]);
+        points.push(vertices[k2]);
+        points.push(vertices[k1+1]);
+      }
+      if(i != nLat-1){
+        points.push(vertices[k1+1]);
+        points.push(vertices[k2]);
+        points.push(vertices[k2+1]);
+      }
+    }
+  }
+}
+
+
 function initCylinderVertices(n){
   let angle = 0;
   let inc = Math.PI*2/n;
@@ -108,11 +153,11 @@ window.onload = function init() {
 
     // initCircleVertices(36);
     // initCircle();
-    initCylinderVertices(36);
-    initCylinder(36);
-    initColors(36*6, 1, 0, 0);
-    initColors(36*3, 0, 1, 0);
-    initColors(36*3, 0, 0, 1);
+    // initCylinderVertices(36);
+    // initCylinder(36);
+    // initColors(36*6, 1, 0, 0);
+    // initColors(36*3, 0, 1, 0);
+    // initColors(36*3, 0, 0, 1);
 
 
     // initCircleVertices(36, top_circle_vertices,1);
@@ -128,6 +173,11 @@ window.onload = function init() {
     //   cylinder_points.push(bottom_circle_points[i]);
     //   cylinder_colors.push(vec4(0,0,1,1));
     // }
+
+    initSphereVertices(36,18);
+    initSphere(36,18);
+    initColors(points.length, 0,0,1);
+
 
 
     // Create and initialize  buffer objects
