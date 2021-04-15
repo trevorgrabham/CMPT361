@@ -58,28 +58,33 @@ void main()
 <script type="text/javascript" src="webgl-utils.js"></script>
 <script type="text/javascript" src="initShaders.js"></script>
 <script type="text/javascript" src="MV.js"></script>
-<script type="text/javascript" src="test.js"></script>
+<script type="text/javascript" src="robotArm.js"></script>
 
 <div>
-base -180 <input id="slider1" type="range"
- min="-180" max="180" step="10" value="0"
-  />
- 180
+old x <input id="oldx" type="text"/>
 </div><br/>
 
 <div>
-lower arm -180 <input id="slider2" type="range"
- min="-180" max="180" step="10" value="0"
-  />
- 180
+old y <input id="oldy" type="text"/>
 </div><br/>
 
 <div>
-upper arm -180 <input id="slider3" type="range"
- min="-180" max="180" step="10" value="0"
-  />
- 180
-</div><br/><br>
+old z <input id="oldz" type="text"/>
+</div><br/>
+
+<div>
+new x <input id="newx" type="text"/>
+</div><br/>
+
+<div>
+new y <input id="newy" type="text"/>
+</div><br/>
+
+<div>
+new z <input id="newz" type="text"/>
+</div><br/>
+
+<button type="button" id="butt">Do Stuff</button>
 
 <h3>Toggle View</h3>
 <label class="switch">
